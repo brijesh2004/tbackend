@@ -11,7 +11,7 @@ app.use(express.json());
 app.use(
     cors({
         credentials:true,
-        origin:['http://localhost:3000'],
+        origin:['https://taskfrontedn.onrender.com'],
         methods:["POST", "GET","UPDATE"],
         allowedHeaders:["Content-Type" , "Authorization"]
     })
@@ -22,7 +22,7 @@ app.get("/" , (req, res)=>{
 })
 
 app.post("/signup" , async (req, res)=>{
-    res.header('Access-Control-Allow-Origin', `http://localhost:3000`);
+    res.header('Access-Control-Allow-Origin', `https://taskfrontedn.onrender.com`);
     try{
         const body = req.body;
         const username = body.user.username;
@@ -48,7 +48,7 @@ app.post("/signup" , async (req, res)=>{
 
 
 app.post("/login" , async (req,res)=>{
-    res.header('Access-Control-Allow-Origin', `http://localhost:3000`);
+    res.header('Access-Control-Allow-Origin', `https://taskfrontedn.onrender.com`);
     try{
     const {emailoruser, password} = req.body;
     
