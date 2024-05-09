@@ -3,7 +3,8 @@ const cors = require("cors");
 const bcrypt = require("bcryptjs")
 const app = express();
 
-const user = require("./model/register");
+const {user ,Post , Comment} = require("./model/register");
+
 require("./db/conn");
 
 app.use(express.json());
@@ -105,6 +106,95 @@ app.post("/forgetpassword" , async (req, res)=>{
         return res.status(500).json({ error });
     }
 })
+
+
+
+
+// Create a Post
+app.post('/posts', async (req, res) => {
+    const { content, userId } = req.body;
+    try {
+        const newPost = new Post({ content, creator: userId });
+        await newPost.save();
+        await user.findByIdAndUpdate(userId, { $push: { posts: newPost._id } });
+        res.status(201).json(newPost);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+
+
+// Get all Posts
+app.get('/posts', async (req, res) => {
+    try {
+        const posts = await Post.find().populate('creator', 'username').populate('comments');
+        res.status(200).json(posts);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+
+// Update a Post
+app.patch('/posts/:id', async (req, res) => {
+    const { content } = req.body;
+    try {
+        const updatedPost = await Post.findByIdAndUpdate(req.params.id, { content }, { new: true });
+        res.status(200).json(updatedPost);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Delete a Post
+app.delete('/posts/:id', async (req, res) => {
+    try {
+        await Post.findByIdAndDelete(req.params.id);
+        res.status(200).json({ message: 'Post deleted successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+
+// Like or Unlike a Post
+app.post('/posts/:id/like', async (req, res) => {
+    const { userId } = req.body;
+    try {
+        const post = await Post.findById(req.params.id);
+        const index = post.likes.indexOf(userId);
+        if (index === -1) {
+            post.likes.push(userId);
+        } else {
+            post.likes.splice(index, 1); // Unlike the post if already liked
+        }
+        await post.save();
+        res.status(200).json(post);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+
+// Comment on a Post
+app.post('/posts/:id/comment', async (req, res) => {
+    const { content, userId } = req.body;
+    try {
+        const newComment = new Comment({ content, createdBy: userId, postId: req.params.id });
+        await newComment.save();
+        await Post.findByIdAndUpdate(req.params.id, { $push: { comments: newComment._id } });
+        res.status(201).json(newComment);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
 
 
 app.listen(8000 , ()=>{
